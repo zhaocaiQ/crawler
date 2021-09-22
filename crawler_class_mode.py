@@ -57,13 +57,154 @@ class Crawler(Searcher):
     ###### 블로그 #######
 
     def blog(self):
-        pass
+        global no2
+        global writer2
+        global title2
+        global content2
+        global dates2
+
+        # 리스트 비우기
+        self.no2.clear()
+        self.writer2.clear()
+        self.title2.clear()
+        self.content2.clear()
+        self.dates2.clear()
+        time.sleep(2)
+
+        # 페이지 링크 가져오기
+        full_html = self.driver.page_source
+        # 페이지 해석
+        soup = BeautifulSoup(full_html, 'html.parser')
+        # VIEW카테고리에 카페글로 가기
+        self.driver.find_element_by_link_text("VIEW").click()
+        time.sleep(1)
+        self.driver.find_element_by_link_text("블로그").click()
+        time.sleep(1)
+
+        elements = self.driver.find_elements_by_xpath(
+            '/html/body/div[3]/div[2]/div/div[1]/section/html-persist/div/more-contents/div/ul/li')
+        if not len(elements):
+            print("정보가 없습니다.")
+            print("="*80)
+        else:
+            full_html = self.driver.page_source
+            soup = BeautifulSoup(full_html, "html.parser")
+            # 시작시간
+            s_time = time.time()
+
+            # 반복문으로 정보 추출하기
+            no = 1
+            for element in elements:
+                try:
+                    title = element.find_element_by_css_selector(
+                        'div > div.total_area > a').text  # 블로그 제목
+                    content = element.find_element_by_css_selector(
+                        'div > div > div.total_group > div > a > div').text  # 블로그 요약 내용
+                    writer = element.find_element_by_css_selector(
+                        'div > div > div.total_info > div.total_sub > span > span > span.elss.etc_dsc_inner > a').text  # 작성자
+                    date = element.find_element_by_css_selector(
+                        'div > div > div.total_info > div.total_sub > span > span > span.etc_dsc_area > span').text  # 날짜
+                except AttributeError:
+                    content = '내용정보가 없습니다.'
+                    print("내용:", content)
+                    self.content2.append(content)
+                    print('\n')
+                else:
+                    print(f'번호: {no}')
+                    self.no2.append(no)
+                    no += 1
+                    print("작성자: ", writer)
+                    self.writer2.append(writer)
+                    print("날짜:", date)
+                    self.dates2.append(date)
+                    print("제목:", title)
+                    self.title2.append(title)
+                    print("내용:", content)
+                    self.content2.append(content)
+                    print('\n')
+
+        # 통합페이지로 돌아가기
+        self.driver.execute_script("window.scrollTo(0, 0)")
+        time.sleep(2)
+        self.driver.find_element_by_xpath(
+            '//*[@id="lnb"]/div[1]/div/ul/li[1]/a').click()
+
+        # 작업시간 표시
+        e_time = time.time()
+        t_time = e_time-s_time
+        print('='*80)
+        print('출력에 걸린시간은 %s초 입니다' % round(t_time, 1))
+        print('='*80)
+
     ###### 뉴스 #######
-
     def news(self):
-        pass
-    ###### 카페 #######
+        global no2
+        global writer2
+        global title2
+        global content2
 
+        # 리스트 비우기
+        self.no2.clear()
+        self.writer2.clear()
+        self.title2.clear()
+        self.content2.clear()
+        time.sleep(2)
+
+        full_html = self.driver.page_source
+        soup = BeautifulSoup(full_html, "html.parser")
+
+        content_list = soup.select(
+            "#main_pack > section.sc_new.sp_nnews._prs_nws_all > div > div.group_news > ul > li")
+
+        if not len(content_list):
+            print("정보가 없습니다.")
+            print("="*80)
+        else:
+            no = 1
+            # 시작시간
+            s_time = time.time()
+
+            # 반복문으로 정보추출
+            for i in content_list:
+                try:
+                    press = i.find("a", "info press").get_text()
+                except AttributeError:
+                    press = "언론사 정보가 없습니다."
+                    print("언론사 : ", press.strip())
+                else:
+                    self.no2.append(no)
+                    self.writer2.append(press)
+                    print("번호 : ", no)  # 번호 출력
+                    no += 1
+                    print("언론사 : ", press.strip())  # 언론사 출력
+                try:
+                    title = i.find("a", "news_tit").get_text()
+                except AttributeError:
+                    title = "제목 정보가 없습니다."
+                    print("제목 : ", title.strip())
+                else:
+                    self.title2.append(title)
+                    print("제목 : ", title.strip())  # 제목 출력
+                try:
+                    content = i.find(
+                        "a", "api_txt_lines dsc_txt_wrap").get_text()
+                except AttributeError:
+                    content = "내용 정보가 없습니다."
+                    print("내용 : ", content.strip())
+                    print('\n')
+                else:
+                    self.content2.append(content)
+                    print("내용 : ", content.strip())  # 내용 출력
+                    print('\n')
+
+            # 작업시간 표시
+            e_time = time.time()
+            t_time = e_time-s_time
+            print('='*80)
+            print('출력에 걸린시간은 %s초 입니다' % round(t_time, 1))
+            print('='*80)
+
+    ###### 카페 #######
     def cafe(self):
         global no2
         global writer2
@@ -247,11 +388,322 @@ class Crawler(Searcher):
 
     ###### 백과사전 #######
     def know(self):
-        pass
-    ###### 어학사전 #######
+        global no2
+        global title2
+        global content2
+        global sources
+        global s_title2
 
+        # 리스트 비우기
+        self.no2.clear()
+        self.title2.clear()
+        self.content2.clear()
+        self.sources.clear()
+        self.s_title2.clear()
+        time.sleep(2)
+
+        html = self.driver.page_source
+        soup = BeautifulSoup(html, 'html.parser')
+
+        encyclopedia = soup.find_all(
+            'section', 'sc_new sp_nkindic _au_kindic_collection')
+
+        # 시작시간
+        s_time = time.time()
+
+        # 지식백과가 없을 시
+        if len(encyclopedia) == 0:
+            self.driver.find_element_by_xpath(
+                '//*[@id="_nx_lnb_more"]/a').click()
+            time.sleep(1)
+            self.driver.find_element_by_xpath(
+                '//*[@id="_nx_lnb_more"]/div/ul/li[2]/a').click()
+            encyclopedia = soup.find_all('div', 'nkindic_area')
+            print()
+
+            # 크롤링할 페이지 입력받기
+            self.cnt = 0
+            while self.cnt <= 0:
+                try:
+                    self.cnt = int(input("크롤링할 페이지는 몇 페이지 입니까?: "))
+                    print()
+                    if self.cnt <= 0:
+                        print("1부터 입력가능합니다.")
+                        print()
+                        continue
+                except:
+                    print("1이상의 숫자로 입력해주세요.")
+                    print()
+                    continue
+
+            print()
+            print('='*80)
+
+            no = 1
+            count = 1
+            # 반복문으로 정보추출
+            for x in range(1, self.cnt+1):
+                html = self.driver.page_source
+                soup = BeautifulSoup(html, 'html.parser')
+                encyclopedia = soup.find_all('div', 'nkindic_area')
+
+                for i in encyclopedia:
+                    subject = i.find_all('div', 'nkindic_tit _svp_content')
+                    for j in subject:
+                        content = i.find('div', 'api_txt_lines desc')
+                        source = i.find('span', 'source_txt')
+                        print('번호:', no)
+                        self.no2.append(no)
+                        print("제목:", j.text.strip())
+                        self.title2.append(j.text.strip())
+                        print("내용:", content.text.strip())
+                        self.content2.append(content.text.strip())
+                        print("출처:", source.text.strip())
+                        self.sources.append(source.text.strip())
+                        print()
+                        no += 1
+                if self.cnt > count:
+                    self.driver.find_element_by_xpath(
+                        '//*[@id="main_pack"]/div[2]/div/a[2]').click()
+                    count += 1
+                    print(
+                        f'-------------------{count}번째 페이지입니다.---------------')
+                    time.sleep(1)
+
+        # 지식백과가 있을 시
+        else:
+            no = 1
+            count = 1
+            # 반복문으로 정보추출
+            for i in encyclopedia:
+                title = i.find_all('div', 'nkindic_tit _svp_content')
+                content = i.find_all('div', 'api_txt_lines desc')
+                source = i.find_all('div', 'nkindic_source')
+                d = 0
+                for a in title:
+                    b = a.find_all('a')
+                    print()
+                    print('번호:', no)
+                    self.no2.append(no)
+                    print('1.제목:', b[0].text)
+                    self.title2.append(b[0].text)
+                    if len(b) > 1:
+                        print('부제목:', b[1].text)
+                        self.s_title2.append(b[1].text)
+                        print('내용:', content[d].text)
+                        self.content2.append(content[d].text)
+                        print('출처:', source[d].text.strip())
+                        self.sources.append(source[d].text)
+                        print()
+                    else:
+                        print('부제목:', '')  # 부제목 없을시
+                        print('내용:', content[d].text)
+                        self.content2.append(content[d].text)
+                        print('출처:', source[d].text.strip())
+                        self.sources.append(source[d].text.strip())
+                        print()
+                    d += 1
+                    no += 1
+        # 작업시간 표시
+        e_time = time.time()
+        t_time = e_time-s_time
+        print('='*80)
+        print('출력에 걸린시간은 %s초 입니다' % round(t_time, 1))
+        print('='*80)
+        # 통합으로 돌아가기
+        self.driver.find_element_by_xpath(
+            '//*[@id="lnb"]/div[1]/div/ul/li[1]/a').click()
+
+    ###### 백과사전 텍스트 저장 #######
+    def know_text(self):
+        html = self.driver.page_source
+        soup = BeautifulSoup(html, 'html.parser')
+
+        encyclopedia = soup.find_all(
+            'section', 'sc_new sp_nkindic _au_kindic_collection')
+
+        # 지식백과가 없을 시
+        if len(encyclopedia) == 0:
+            self.driver.find_element_by_xpath(
+                '//*[@id="_nx_lnb_more"]/a').click()
+            time.sleep(1)
+            self.driver.find_element_by_xpath(
+                '//*[@id="_nx_lnb_more"]/div/ul/li[2]/a').click()
+            encyclopedia = soup.find_all('div', 'nkindic_area')
+            print()
+
+            no = 1
+            count = 1
+            # 반복문으로 정보추출
+            for x in range(1, self.cnt+1):
+                html = self.driver.page_source
+                soup = BeautifulSoup(html, 'html.parser')
+                encyclopedia = soup.find_all('div', 'nkindic_area')
+
+                for i in encyclopedia:
+                    subject = i.find_all('div', 'nkindic_tit _svp_content')
+                    for j in subject:
+                        content = i.find('div', 'api_txt_lines desc')
+                        source = i.find('span', 'source_txt')
+                        print('번호:', no)
+                        print("제목:", j.text.strip())
+                        print("내용:", content.text.strip())
+                        print("출처:", source.text.strip())
+                        print()
+                        no += 1
+                if self.cnt > count:
+                    self.driver.find_element_by_xpath(
+                        '//*[@id="main_pack"]/div[2]/div/a[2]').click()
+                    count += 1
+                    print(
+                        f'-------------------{count}번째 페이지입니다.---------------')
+                    time.sleep(1)
+
+        # 지식백과가 있을 시
+        else:
+            no = 1
+            count = 1
+            for i in encyclopedia:
+                title = i.find_all('div', 'nkindic_tit _svp_content')
+                content = i.find_all('div', 'api_txt_lines desc')
+                source = i.find_all('div', 'nkindic_source')
+                d = 0
+                # 반복문으로 정보추출
+                for a in title:
+                    b = a.find_all('a')
+                    print()
+                    print('번호:', no)
+                    print('1.제목:', b[0].text)
+                    if len(b) > 1:
+                        print('부제목:', b[1].text)
+                        print('내용:', content[d].text)
+                        print('출처:', source[d].text.strip())
+                        print()
+                    else:
+                        print('부제목:', '')  # 부제목 없을시
+                        print('내용:', content[d].text)
+                        print('출처:', source[d].text.strip())
+                        print()
+                    d += 1
+                    no += 1
+
+        # 통합으로 돌아가기
+        self.driver.find_element_by_xpath(
+            '//*[@id="lnb"]/div[1]/div/ul/li[1]/a').click()
+
+    ###### 어학사전 #######
     def lan_dic(self):
-        pass
+        global no2
+        global title2
+        global content2
+        global dic2
+
+        # 리스트 비우기
+        self.no2.clear()
+        self.dic2.clear()
+        self.title2.clear()
+        self.content2.clear()
+        time.sleep(2)
+
+        page = self.driver.page_source
+        soup = BeautifulSoup(page, 'html.parser')
+
+        # 시작시간
+        s_time = time.time()
+        no = 1
+        try:
+            contents_title = soup.find(
+                'section', '_au_dictionary').find('div', '_popup_wrap')
+        except AttributeError:
+            print('어학사전이 존재하지 않습니다.')
+            print('='*80)
+        else:
+            # 어학사전일때 사전정보 찾기
+            content_list = soup.find_all("div", "dic_area")
+            # 그외 사전일때 사전정보 찾기
+            content_list2 = soup.find_all("section", "_au_dictionary")
+
+            # 사전 타이틀 추출하기
+            word_f = soup.find_all("h2", "api_title")
+            for word in word_f:
+                #### 어학사전 크롤링 ####
+                if word.get_text() == '어학사전':
+                    for i in content_list:
+                        try:
+                            dic = i.find(
+                                "h3", "dic_title_sub").get_text().strip()
+                        except:
+                            dic = '사전 정보가 없습니다.'
+                            self.dic2.append(dic)
+                            print("사전:", dic)
+                        else:
+                            self.no2.append(no)
+                            print("번호:", no)
+                            self.dic2.append(dic)
+                            print("사전:", dic)
+                        try:
+                            title = i.find("a", "title").get_text().strip()
+                        except:
+                            title = '단어 정보가 없습니다.'
+                            self.title2.append(title)
+                            print("단어:", title)
+                        else:
+                            self.title2.append(title)
+                            print("단어:", title)
+                        try:
+                            content = i.find(
+                                "dd", "word_dsc").get_text().strip()
+                        except:
+                            content = '뜻 정보가 없습니다.'
+                            self.content2.append(content)
+                            print("뜻:", content)
+                        else:
+                            self.content2.append(content)
+                            print("뜻:", content)
+                            no += 1
+                            print()
+
+                #### 그외 사전 크롤링 ####
+                elif '사전' in word.get_text():
+                    for i in content_list2:
+                        try:
+                            dic = i.find("h2", "api_title").get_text().split()
+                        except:
+                            dic = '사전 정보가 없습니다.'
+                            self.dic2.append(dic)
+                            print("사전:", dic)
+                        else:
+                            no2.append(no)
+                            print("번호:", no)
+                            self.dic2.append(dic[0][:9])
+                            print("사전:", dic[0][:9])
+                        try:
+                            title = i.find("a", "title").get_text().strip()
+                        except:
+                            title = '단어 정보가 없습니다.'
+                            self.title2.append(title)
+                            print("단어:", title)
+                        else:
+                            self.title2.append(title)
+                            print("단어:", title)
+                        try:
+                            content = i.find(
+                                "dd", "word_dsc").get_text().strip()
+                        except:
+                            content = '뜻 정보가 없습니다.'
+                            self.content2.append(content)
+                            print("뜻:", content)
+                        else:
+                            self.content2.append(content)
+                            print("뜻:", content)
+                            no += 1
+                            print()
+            # 작업시간 표시
+            e_time = time.time()
+            t_time = e_time-s_time
+            print('='*80)
+            print('출력에 걸린시간은 %s초 입니다' % round(t_time, 1))
+            print('='*80)
 
 
 class SaveMenu(Crawler):
@@ -392,13 +844,30 @@ class SaveMenu(Crawler):
             else:
                 pass
 
-        #### 블로그 ####
+        ###### 블로그 #######
         if searchType == 1:
-            pass
-        #### 뉴스 ####
+            data = pd.DataFrame()
+            data['번호'] = self.no2
+            data['제목'] = self.dates2
+            data['내용'] = self.writer2
+            data['작성일'] = self.content2
+            data['작성자'] = self.title2
+            data.to_csv(fc_name, encoding='utf-8-sig')
+            print('csv 파일 저장 경로 : %s' % fc_name)
+            print("="*80)
+
+        ###### 뉴스 #######
         elif searchType == 2:
-            pass
-        #### 카페 ####
+            data = pd.DataFrame()
+            data["번호"] = self.no2
+            data["제목"] = self.content2
+            data["내용"] = self.title2
+            data["언론사"] = self.writer2
+            data.to_csv(fc_name, encoding='utf-8-sig')
+            print('csv 파일 저장 경로 : %s' % fc_name)
+            print("="*80)
+
+        ###### 카페 #######
         elif searchType == 3:
             data = pd.DataFrame()
             data['번호'] = self.no2
@@ -406,15 +875,35 @@ class SaveMenu(Crawler):
             data['내용'] = self.content2
             data['작성일'] = self.dates2
             data['카페명'] = self.writer2
-            data.to_excel(fx_name)
-            print('xls 파일 저장 경로 : %s' % fx_name)
+            data.to_csv(fc_name, encoding='utf-8-sig')
+            print('csv 파일 저장 경로 : %s' % fc_name)
             print("="*80)
-        #### 지식백과 ####
+
+        ###### 지식백과 #######
         elif searchType == 4:
-            pass
-        #### 어학사전 ####
+            data = pd.DataFrame()
+            data['번호'] = self.no2
+            data['제목'] = self.title2
+            try:
+                data['부제목'] = self.s_title2
+            except:
+                pass
+            data['내용'] = self.content2
+            data['출처'] = self.sources
+            data.to_csv(fc_name, encoding='utf-8-sig')
+            print('csv 파일 저장 경로 : %s' % fc_name)
+            print("="*80)
+
+        ###### 어학사전 #######
         elif searchType == 5:
-            pass
+            data = pd.DataFrame()
+            data['번호'] = self.no2
+            data['사전'] = self.dic2
+            data['단어'] = self.title2
+            data['뜻'] = self.content2
+            data.to_csv(fc_name, encoding='utf-8-sig')
+            print('csv 파일 저장 경로 : %s' % fc_name)
+            print("="*80)
 
     def save_xls(self, searchType):
         now = time.localtime()
@@ -428,13 +917,30 @@ class SaveMenu(Crawler):
             else:
                 pass
 
-        #### 블로그 ####
+        ###### 블로그 #######
         if searchType == 1:
-            pass
-        #### 뉴스 ####
+            data = pd.DataFrame()
+            data['번호'] = self.no2
+            data['제목'] = self.dates2
+            data['내용'] = self.writer2
+            data['작성일'] = self.content2
+            data['작성자'] = self.title2
+            data.to_excel(fx_name)
+            print('xls 파일 저장 경로 : %s' % fx_name)
+            print("="*80)
+
+        ###### 뉴스 #######
         elif searchType == 2:
-            pass
-        #### 카페 ####
+            data = pd.DataFrame()
+            data["번호"] = self.no2
+            data["제목"] = self.content2
+            data["내용"] = self.title2
+            data["언론사"] = self.writer2
+            data.to_excel(fx_name)
+            print('xls 파일 저장 경로 : %s' % fx_name)
+            print("="*80)
+
+        ###### 카페 #######
         elif searchType == 3:
             data = pd.DataFrame()
             data['번호'] = self.no2
@@ -445,12 +951,32 @@ class SaveMenu(Crawler):
             data.to_excel(fx_name)
             print('xls 파일 저장 경로 : %s' % fx_name)
             print("="*80)
-        #### 지식백과 ####
+
+        ###### 지식백과 #######
         elif searchType == 4:
-            pass
-        #### 어학사전 ####
+            data = pd.DataFrame()
+            data['번호'] = self.no2
+            data['제목'] = self.title2
+            try:
+                data['부제목'] = self.s_title2
+            except:
+                pass
+            data['내용'] = self.content2
+            data['출처'] = self.sources
+            data.to_excel(fx_name)
+            print('xls 파일 저장 경로 : %s' % fx_name)
+            print("="*80)
+
+        ###### 어학사전 #######
         elif searchType == 5:
-            pass
+            data = pd.DataFrame()
+            data['번호'] = self.no2
+            data['사전'] = self.dic2
+            data['단어'] = self.title2
+            data['뜻'] = self.content2
+            data.to_excel(fx_name)
+            print('xls 파일 저장 경로 : %s' % fx_name)
+            print("="*80)
 
 
 class Run(SaveMenu):
